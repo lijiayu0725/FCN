@@ -7,7 +7,7 @@ from load import VOCSegDataset
 from utils import *
 
 num_images = 6
-epoch_used = 8
+epoch_used = 10
 
 net = torch.load('saved_models/epoch-%d_saved_model.pth' % epoch_used)
 voc_test = VOCSegDataset((512, 512), image_transform, mode='test')
@@ -19,7 +19,6 @@ def predict(image, label):  # 预测结果
     out = net(image)
     pred = torch.argmax(out, dim=1).squeeze().cpu().data.numpy()
     pred = cm[pred]
-    a = label.numpy()
     return pred, cm[label.numpy().astype(np.int)]
 
 

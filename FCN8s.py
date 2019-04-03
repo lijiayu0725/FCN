@@ -1,4 +1,5 @@
 from torch import nn
+from torch.nn import functional as F
 from torchvision import models
 
 from utils import *
@@ -20,9 +21,12 @@ class fcn8s(nn.Module):
             *list(vgg16.features[-7:])
         )
 
-        self.scores1 = nn.Conv2d(512, num_classes, 1)
+        self.scores1 = nn.Conv2d(4096, num_classes, 1)
         self.scores2 = nn.Conv2d(512, num_classes, 1)
         self.scores3 = nn.Conv2d(256, num_classes, 1)
+
+        self.fc1 = nn.Conv2d(512, 4096, 1)
+        self.fc2 = nn.Conv2d(4096, 4096, 1)
 
         self.upsample_8x = nn.ConvTranspose2d(num_classes, num_classes, 16, 8, 4, bias=False)
         self.upsample_8x.weight.data = bilinear_kernel(num_classes, num_classes, 16)  # 使用双线性 kernel
@@ -41,6 +45,13 @@ class fcn8s(nn.Module):
         s2 = x
 
         x = self.stage3(x)
+
+        x = F.relu(self.fc1(x))
+        x = F.dropout2d(x)
+        x = F.relu(self.fc2(x))
+        x = F.dropout2d(x)
+
+
 
         s3 = self.scores1(x)
         s3 = self.upsample_2x(s3)
